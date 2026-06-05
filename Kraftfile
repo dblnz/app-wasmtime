@@ -5,6 +5,8 @@ name: app-ukwasmtime
 
 cmd: ["/main.wasm"]
 
+rootfs: ./rootfs
+
 unikraft:
   source: /home/dblnz/workspace/thesis/unikraft-patched
   version: staging
