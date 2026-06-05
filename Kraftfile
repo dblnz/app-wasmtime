@@ -1,0 +1,41 @@
+
+spec: v0.6
+
+name: app-ukwasmtime
+
+cmd: ["/main.wasm"]
+
+unikraft:
+  source: /home/dblnz/workspace/thesis/unikraft-patched
+  version: staging
+  kconfig:
+    CONFIG_LIBDEVFS_AUTOMOUNT: 'y'
+    CONFIG_LIBDEVFS_DEV_STDOUT: 'y'
+    CONFIG_LIBDEVFS: 'y'
+    CONFIG_LIBPOSIX_PROCESS: 'y'
+    CONFIG_LIBPOSIX_USER: 'y'
+    CONFIG_LIBRAMFS: 'y'
+    CONFIG_LIBUKCPIO: 'y'
+    CONFIG_LIBUKMMAP: 'y'
+    CONFIG_LIBUKSCHEDCOOP: 'y'
+    CONFIG_LIBVFSCORE: 'y'
+    CONFIG_LIBUKRUST: 'y'
+
+targets:
+- qemu/x86_64
+
+libraries:
+  rust:
+    source: https://github.com/unikraft/lib-rust.git
+    version: staging
+    kconfig:
+      - CONFIG_LIBUKCARGO=y
+  ukwasmtime:
+    source: /home/dblnz/workspace/thesis/lib-ukwasmtime
+    version: staging
+    kconfig:
+      - CONFIG_LIBUKWASMTIME=y
+      - CONFIG_LIBUKWASMTIME_COMPONENT_MODEL=y
+  musl:
+    source: https://github.com/unikraft/lib-musl.git
+    version: staging
