@@ -1,14 +1,11 @@
 $(eval $(call addlib,appukwasmtime))
 
-APPUKWASMTIME_TARGET_JSON := $(APPUKWASMTIME_BASE)/x86_64-unikraft.json
+# GCC 16+ enforces C23 where () means (void); use gnu17 for compat with
+# unikraft and musl sources that predate C23.
+CFLAGS-y += -std=gnu17
 
-APPUKWASMTIME_CARGOFLAGS-y += \
-	--target=$(APPUKWASMTIME_TARGET_JSON) \
-	-Z build-std=core,alloc \
-	-Z unstable-options \
-	-Z json-target-spec
+# Resolve duplicate alloc symbols between ukrust and cargo-built alloc
+# (ukrust and lib-ukwasmtime both build the alloc crate independently).
+LDFLAGS-y += -Wl,--allow-multiple-definition
 
-APPUKWASMTIME_RUSTCFLAGS-y += \
-	-Zallow-features=alloc_error_handler,allocator_api,concat_idents,bench_black_box,global_asm,try_reserve
-
-APPUKWASMTIME_SRCS-y += $(APPUKWASMTIME_BASE)/app/Cargo.toml
+APPUKWASMTIME_SRCS-y += $(APPUKWASMTIME_BASE)/main.c

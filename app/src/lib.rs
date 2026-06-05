@@ -73,13 +73,23 @@ fn read_file(path: &[u8]) -> Option<Vec<u8>> {
 fn demo_hello_module() {
     print(b"=== Running hello module ===\n\0");
 
+    print(b"  reading file...\n\0");
     let bytes = match read_file(b"/hello.cwasm\0") {
-        Some(b) => b,
+        Some(b) => {
+            printf(b"  read %zu bytes\n\0".as_ptr() as *const c_char, b.len());
+            b
+        },
         None => return,
     };
 
-    let engine = match Engine::new(&wasmtime::Config::new()) {
-        Ok(e) => e,
+    print(b"  creating config...\n\0");
+    let config = wasmtime::Config::new();
+    print(b"  creating engine...\n\0");
+    let engine = match Engine::new(&config) {
+        Ok(e) => {
+            print(b"  engine created OK\n\0");
+            e
+        },
         Err(_) => {
             print(b"ERROR: engine creation failed\n\0");
             return;
@@ -180,7 +190,7 @@ fn demo_add_module() {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn main() -> c_int {
+pub extern "C" fn uk_wasmtime_main() -> c_int {
     print(b"app-ukwasmtime: Unikraft WebAssembly demo\n\0");
 
     demo_hello_module();
