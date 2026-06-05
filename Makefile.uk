@@ -1,4 +1,4 @@
-$(eval $(call addlib_s,appukwasmtime,$(CONFIG_APPUKWASMTIME)))
+$(eval $(call addlib,appukwasmtime))
 
 APPUKWASMTIME_TARGET_JSON := $(APPUKWASMTIME_BASE)/x86_64-unikraft.json
 
