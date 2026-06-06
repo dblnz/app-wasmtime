@@ -135,12 +135,94 @@ static void demo_add_module(void)
 	ukwasmtime_engine_destroy(engine);
 }
 
+static void demo_add_component(void)
+{
+	size_t len;
+	uint8_t *data;
+	void *engine, *component;
+	int32_t result;
+	int32_t a = 10, b = 20;
+
+	printf("=== Running add component ===\n");
+
+	data = read_file("/add-component.cwasm", &len);
+	if (!data)
+		return;
+
+	engine = ukwasmtime_engine_create();
+	if (!engine) {
+		printf("ERROR: engine creation failed\n");
+		free(data);
+		return;
+	}
+
+	component = ukwasmtime_component_load(engine, data, len);
+	free(data);
+	if (!component) {
+		printf("ERROR: component load failed\n");
+		ukwasmtime_engine_destroy(engine);
+		return;
+	}
+	printf("  component loaded\n");
+
+	if (ukwasmtime_component_call_ii_i(engine, component, "add",
+					   a, b, &result) == 0)
+		printf("  add(%d, %d) = %d\n", a, b, result);
+	else
+		printf("ERROR: component add call failed\n");
+
+	ukwasmtime_component_destroy(component);
+	ukwasmtime_engine_destroy(engine);
+}
+
+static void demo_double_component(void)
+{
+	size_t len;
+	uint8_t *data;
+	void *engine, *component;
+	int32_t result;
+	int32_t x = 21;
+
+	printf("=== Running double component ===\n");
+
+	data = read_file("/double-component.cwasm", &len);
+	if (!data)
+		return;
+
+	engine = ukwasmtime_engine_create();
+	if (!engine) {
+		printf("ERROR: engine creation failed\n");
+		free(data);
+		return;
+	}
+
+	component = ukwasmtime_component_load(engine, data, len);
+	free(data);
+	if (!component) {
+		printf("ERROR: component load failed\n");
+		ukwasmtime_engine_destroy(engine);
+		return;
+	}
+	printf("  component loaded\n");
+
+	if (ukwasmtime_component_call_i_i(engine, component, "double",
+					  x, &result) == 0)
+		printf("  double(%d) = %d\n", x, result);
+	else
+		printf("ERROR: component double call failed\n");
+
+	ukwasmtime_component_destroy(component);
+	ukwasmtime_engine_destroy(engine);
+}
+
 int main(int argc, char *argv[])
 {
 	printf("app-ukwasmtime: Unikraft WebAssembly demo\n");
 
 	demo_hello_module();
 	demo_add_module();
+	demo_add_component();
+	demo_double_component();
 
 	printf("app-ukwasmtime: done\n");
 	return 0;

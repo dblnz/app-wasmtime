@@ -3,7 +3,7 @@
 ## Source Files
 
 | File        | Type        | Description                                     |
-|-------------|-------------|-------------------------------------------------|
+| ----------- | ----------- | ----------------------------------------------- |
 | `hello.wat` | Core module | Imports `env.print_i32`, calls it with 42 and 7 |
 | `add.wat`   | Core module | Exports `add(i32, i32) -> i32`                  |
 
