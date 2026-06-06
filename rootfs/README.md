@@ -18,10 +18,12 @@ curl https://wasmtime.dev/install.sh -sSf | bash -s -- --version v45.0.0
 # Or with cargo:
 cargo install wasmtime-cli --version 45.0.0
 
-# Compile the modules
+# Compile the modules (MUST match the Unikraft target triple and runtime config)
+# All non-essential wasm features are disabled to match the no_std engine config.
 cd app-ukwasmtime/wasm
-wasmtime compile hello.wat -o hello.cwasm
-wasmtime compile add.wat -o add.cwasm
+WASM_FLAGS="--target x86_64-unikraft-unknown-unknown -C cranelift-baseline -W gc=n -W gc-support=n -W concurrency-support=n -W threads=n -W shared-memory=n -W relaxed-simd=n -W simd=n -W reference-types=n -W function-references=n -W tail-call=n -W multi-memory=n -W memory64=n -W exceptions=n -W custom-page-sizes=n -W wide-arithmetic=n -W extended-const=n -W component-model=n"
+wasmtime compile $WASM_FLAGS hello.wat -o hello.cwasm
+wasmtime compile $WASM_FLAGS add.wat -o add.cwasm
 ```
 
 The resulting `.cwasm` files are precompiled for x86_64 and will be loaded

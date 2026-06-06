@@ -3,7 +3,7 @@
 ;; This is a plain core module (not a component). It exports `add(i32, i32) -> i32`.
 ;; The demo app will use Module::deserialize + get_typed_func to call it.
 ;;
-;; Compile: wasmtime compile add.wat -o add.cwasm
+;; Compile: wasmtime compile --target x86_64-unikraft-unknown-unknown -C cranelift-baseline -W gc=n add.wat -o add.cwasm
 (module
   (func (export "add") (param i32 i32) (result i32)
     local.get 0

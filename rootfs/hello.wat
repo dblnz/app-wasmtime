@@ -1,7 +1,7 @@
 ;; hello.wat — Core WebAssembly module
 ;;
 ;; Imports `env.print_i32` from the host and calls it with 42 from `_start`.
-;; Compile: wasmtime compile hello.wat -o hello.cwasm
+;; Compile: wasmtime compile --target x86_64-unikraft-unknown-unknown -C cranelift-baseline -W gc=n hello.wat -o hello.cwasm
 (module
   (import "env" "print_i32" (func $print_i32 (param i32)))
 
