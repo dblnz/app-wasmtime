@@ -3,8 +3,6 @@ spec: v0.6
 
 name: app-ukwasmtime
 
-cmd: ["/main.wasm"]
-
 rootfs: ./rootfs
 
 unikraft:

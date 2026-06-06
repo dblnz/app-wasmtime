@@ -135,8 +135,7 @@ static void demo_add_module(void)
 	ukwasmtime_engine_destroy(engine);
 }
 
-int main(int argc __attribute__((unused)),
-	 char *argv[] __attribute__((unused)))
+int main(int argc, char *argv[])
 {
 	printf("app-ukwasmtime: Unikraft WebAssembly demo\n");
 
