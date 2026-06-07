@@ -22,6 +22,17 @@ unikraft:
     CONFIG_LIBVFSCORE_AUTOMOUNT_CI: 'y'
     CONFIG_LIBVFSCORE_AUTOMOUNT_CI_INITRD: 'y'
     CONFIG_LIBUKRUST: 'y'
+    # Networking: POSIX sockets + virtio-net for the HTTP endpoint.
+    CONFIG_LIBPOSIX_SOCKET: 'y'
+    CONFIG_LIBPOSIX_POLL: 'y'
+    CONFIG_LIBUKNETDEV: 'y'
+    CONFIG_LIBUKNETDEV_EINFO_LIBPARAM: 'y'
+    CONFIG_LIBUKLIBPARAM: 'y'
+    CONFIG_HAVE_PCI: 'y'
+    CONFIG_LIBUKBUS_PCI: 'y'
+    CONFIG_LIBVIRTIO_BUS: 'y'
+    CONFIG_LIBVIRTIO_PCI: 'y'
+    CONFIG_LIBVIRTIO_NET: 'y'
 
 targets:
 - qemu/x86_64
@@ -41,3 +52,19 @@ libraries:
   musl:
     source: https://github.com/unikraft/lib-musl.git
     version: staging
+  lwip:
+    source: https://github.com/unikraft/lib-lwip.git
+    version: staging
+    kconfig:
+      - CONFIG_LWIP_UKNETDEV=y
+      - CONFIG_LWIP_AUTOIFACE=y
+      - CONFIG_LWIP_IPV4=y
+      - CONFIG_LWIP_TCP=y
+      - CONFIG_LWIP_UDP=y
+      - CONFIG_LWIP_DHCP=y
+      - CONFIG_LWIP_SOCKET=y
+      - CONFIG_LWIP_THREADS=y
+      - CONFIG_LWIP_HEAP=y
+      - CONFIG_LWIP_LOOPIF=y
+      - CONFIG_LWIP_LOOPBACK=y
+      - CONFIG_LWIP_ICMP=y
