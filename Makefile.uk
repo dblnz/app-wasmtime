@@ -1,0 +1,11 @@
+$(eval $(call addlib,appwasmtime))
+
+# GCC 16+ enforces C23 where () means (void); use gnu17 for compat with
+# unikraft and musl sources that predate C23.
+CFLAGS-y += -std=gnu17
+
+# Resolve duplicate alloc symbols between ukrust and cargo-built alloc
+# (ukrust and lib-ukwasmtime both build the alloc crate independently).
+LDFLAGS-y += -Wl,--allow-multiple-definition
+
+APPWASMTIME_SRCS-y += $(APPWASMTIME_BASE)/main.c

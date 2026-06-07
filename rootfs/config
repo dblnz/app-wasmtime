@@ -1,0 +1,6 @@
+type=module
+file=/add.cwasm
+function=add
+argc=2
+arg0=3
+arg1=4
