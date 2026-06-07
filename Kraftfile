@@ -6,8 +6,8 @@ name: app-ukwasmtime
 rootfs: ./rootfs
 
 unikraft:
-  source: /home/dblnz/workspace/thesis/unikraft-patched
-  version: staging
+  source: https://github.com/dblnz/unikraft.git
+  version: update-ukrust-to-1.95
   kconfig:
     CONFIG_LIBDEVFS_AUTOMOUNT: 'y'
     CONFIG_LIBDEVFS_DEV_STDOUT: 'y'
@@ -43,9 +43,9 @@ libraries:
     version: staging
     kconfig:
       - CONFIG_LIBUKCARGO=y
-  ukwasmtime:
-    source: /home/dblnz/workspace/thesis/lib-ukwasmtime
-    version: staging
+  wasmtime:
+    source: https://github.com/dblnz/lib-wasmtime.git
+    version: wip
     kconfig:
       - CONFIG_LIBUKWASMTIME=y
       - CONFIG_LIBUKWASMTIME_COMPONENT_MODEL=y

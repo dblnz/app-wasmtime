@@ -98,11 +98,11 @@ fn demo_hello_module() {
         Some(b) => {
             printf(b"  read %zu bytes\n\0".as_ptr() as *const c_char, b.len());
             b
-        },
+        }
         None => return,
     };
 
-    match lib_ukwasmtime::run_module(&bytes) {
+    match ukwasmtime::run_module(&bytes) {
         Ok(()) => print(b"hello module finished OK\n\0"),
         Err(_) => print(b"ERROR: hello module failed\n\0"),
     }
@@ -117,7 +117,7 @@ fn demo_add_module() {
     };
 
     let (a, b) = (3, 4);
-    match lib_ukwasmtime::call_module_ii_i(&bytes, "add", a, b) {
+    match ukwasmtime::call_module_ii_i(&bytes, "add", a, b) {
         Ok(result) => {
             printf(
                 b"add(%d, %d) = %d\n\0".as_ptr() as *const c_char,
@@ -125,7 +125,7 @@ fn demo_add_module() {
                 b,
                 result,
             );
-        },
+        }
         Err(_) => print(b"ERROR: add call failed\n\0"),
     }
 }
@@ -193,7 +193,9 @@ fn handle_request(method: &str, path: &str, body: &[u8], add_wasm: Option<&[u8]>
 
     match path {
         "/" => match method {
-            "GET" => json_ok(&MessageResponse { message: "hello from app-ukwasmtime" }),
+            "GET" => json_ok(&MessageResponse {
+                message: "hello from app-ukwasmtime",
+            }),
             _ => json_error("405 Method Not Allowed", "method not allowed"),
         },
         "/health" => match method {
@@ -213,14 +215,17 @@ fn handle_add(body: &[u8], add_wasm: Option<&[u8]>) -> Vec<u8> {
     let req: AddRequest = match serde_json::from_slice(body) {
         Ok(r) => r,
         Err(_) => {
-            return json_error("400 Bad Request", "invalid JSON body; expected {\"a\":int,\"b\":int}");
-        },
+            return json_error(
+                "400 Bad Request",
+                "invalid JSON body; expected {\"a\":int,\"b\":int}",
+            );
+        }
     };
     let wasm = match add_wasm {
         Some(w) => w,
         None => return json_error("503 Service Unavailable", "add module unavailable"),
     };
-    match lib_ukwasmtime::call_module_ii_i(wasm, "add", req.a, req.b) {
+    match ukwasmtime::call_module_ii_i(wasm, "add", req.a, req.b) {
         Ok(result) => json_ok(&AddResponse { result }),
         Err(_) => json_error("500 Internal Server Error", "add call failed"),
     }
@@ -261,7 +266,7 @@ fn read_request(cfd: c_int, buf: &mut [u8]) -> Option<(String, String, usize, us
                     .and_then(|s| s.trim().parse::<usize>().ok())
                     .unwrap_or(0);
                 break (method, path, hlen, content_length);
-            },
+            }
             Ok(httparse::Status::Partial) => continue,
             Err(_) => return None,
         }
@@ -331,7 +336,7 @@ fn serve_http(port: u16) {
             Some((method, path, body_start, total)) => {
                 let body = &buf[body_start..total];
                 handle_request(&method, &path, body, add_wasm.as_deref())
-            },
+            }
             None => json_error("400 Bad Request", "malformed request"),
         };
 

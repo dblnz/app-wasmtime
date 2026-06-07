@@ -7,8 +7,8 @@ edition = "2024"
 crate-type = ["staticlib"]
 
 [dependencies]
-lib-ukwasmtime = { path = "../../lib-ukwasmtime" }
-ukrust = { path = "../../unikraft-patched/lib/ukrust/" }
+ukwasmtime = { path = "../.unikraft/libs/wasmtime/" }
+ukrust = { path = "../.unikraft/unikraft/lib/ukrust/" }
 httparse = { version = "1", default-features = false }
 serde = { version = "1", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }
