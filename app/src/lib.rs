@@ -6,7 +6,6 @@ pub use ukrust;
 use alloc::vec;
 use alloc::vec::Vec;
 use core::ffi::{c_char, c_int, c_void};
-use wasmtime::{Engine, Instance, Linker, Module, Store, TypedFunc};
 
 unsafe extern "C" {
     safe fn printf(fmt: *const c_char, ...) -> c_int;
@@ -73,7 +72,6 @@ fn read_file(path: &[u8]) -> Option<Vec<u8>> {
 fn demo_hello_module() {
     print(b"=== Running hello module ===\n\0");
 
-    print(b"  reading file...\n\0");
     let bytes = match read_file(b"/hello.cwasm\0") {
         Some(b) => {
             printf(b"  read %zu bytes\n\0".as_ptr() as *const c_char, b.len());
@@ -82,51 +80,9 @@ fn demo_hello_module() {
         None => return,
     };
 
-    print(b"  creating config...\n\0");
-    let config = wasmtime::Config::new();
-    print(b"  creating engine...\n\0");
-    let engine = match Engine::new(&config) {
-        Ok(e) => {
-            print(b"  engine created OK\n\0");
-            e
-        },
-        Err(_) => {
-            print(b"ERROR: engine creation failed\n\0");
-            return;
-        }
-    };
-
-    let module = match unsafe { Module::deserialize(&engine, &bytes) } {
-        Ok(m) => m,
-        Err(_) => {
-            print(b"ERROR: module deserialization failed\n\0");
-            return;
-        }
-    };
-
-    let mut store: Store<()> = Store::new(&engine, ());
-    let mut linker = Linker::<()>::new(&engine);
-
-    let _ = linker.func_wrap("env", "print_i32", |val: i32| {
-        printf(b"wasm> %d\n\0".as_ptr() as *const c_char, val);
-    });
-
-    let _ = linker.define_unknown_imports_as_traps(&module);
-
-    let instance: Instance = match linker.instantiate(&mut store, &module) {
-        Ok(i) => i,
-        Err(_) => {
-            print(b"ERROR: instantiation failed\n\0");
-            return;
-        }
-    };
-
-    match instance.get_typed_func::<(), ()>(&mut store, "_start") {
-        Ok(start) => match start.call(&mut store, ()) {
-            Ok(()) => print(b"hello module finished OK\n\0"),
-            Err(_) => print(b"ERROR: _start call failed\n\0"),
-        },
-        Err(_) => print(b"ERROR: could not find '_start' export\n\0"),
+    match lib_ukwasmtime::run_module(&bytes) {
+        Ok(()) => print(b"hello module finished OK\n\0"),
+        Err(_) => print(b"ERROR: hello module failed\n\0"),
     }
 }
 
@@ -138,45 +94,8 @@ fn demo_add_module() {
         None => return,
     };
 
-    let engine = match Engine::new(&wasmtime::Config::new()) {
-        Ok(e) => e,
-        Err(_) => {
-            print(b"ERROR: engine creation failed\n\0");
-            return;
-        }
-    };
-
-    let module = match unsafe { Module::deserialize(&engine, &bytes) } {
-        Ok(m) => m,
-        Err(_) => {
-            print(b"ERROR: module deserialization failed\n\0");
-            return;
-        }
-    };
-
-    let mut store: Store<()> = Store::new(&engine, ());
-    let linker = Linker::<()>::new(&engine);
-
-    let instance: Instance = match linker.instantiate(&mut store, &module) {
-        Ok(i) => i,
-        Err(_) => {
-            print(b"ERROR: instantiation failed\n\0");
-            return;
-        }
-    };
-
-    let add_func: TypedFunc<(i32, i32), i32> = match instance
-        .get_typed_func::<(i32, i32), i32>(&mut store, "add")
-    {
-        Ok(f) => f,
-        Err(_) => {
-            print(b"ERROR: could not find 'add' export\n\0");
-            return;
-        }
-    };
-
     let (a, b) = (3, 4);
-    match add_func.call(&mut store, (a, b)) {
+    match lib_ukwasmtime::call_module_ii_i(&bytes, "add", a, b) {
         Ok(result) => {
             printf(
                 b"add(%d, %d) = %d\n\0".as_ptr() as *const c_char,

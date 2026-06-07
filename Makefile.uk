@@ -1,11 +1,26 @@
 $(eval $(call addlib,appukwasmtime))
 
 # GCC 16+ enforces C23 where () means (void); use gnu17 for compat with
-# unikraft and musl sources that predate C23.
+# unikraft and musl C sources that predate C23.
 CFLAGS-y += -std=gnu17
+
+APPUKWASMTIME_TARGET_JSON := $(APPUKWASMTIME_BASE)/x86_64-unikraft.json
+
+APPUKWASMTIME_CARGOFLAGS-y += \
+	--target=$(APPUKWASMTIME_TARGET_JSON) \
+	-Z build-std=core,alloc \
+	-Z unstable-options \
+	-Z json-target-spec
+
+APPUKWASMTIME_RUSTCFLAGS-y += \
+	-Zallow-features=alloc_error_handler,allocator_api,concat_idents,bench_black_box,global_asm,try_reserve
 
 # Resolve duplicate alloc symbols between ukrust and cargo-built alloc
 # (ukrust and lib-ukwasmtime both build the alloc crate independently).
 LDFLAGS-y += -Wl,--allow-multiple-definition
 
+# main.c provides the entry point and calls uk_wasmtime_main() in the Rust
+# staticlib. The C object is always linked (overriding ukboot's weak main),
+# and its reference pulls the Rust archive in.
 APPUKWASMTIME_SRCS-y += $(APPUKWASMTIME_BASE)/main.c
+APPUKWASMTIME_SRCS-y += $(APPUKWASMTIME_BASE)/app/Cargo.toml
