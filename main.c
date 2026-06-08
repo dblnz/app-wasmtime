@@ -25,6 +25,7 @@
 #include <ukwasmtime.h>
 
 #define MAX_ARGS       8
+#define MAX_RESULTS    4
 #define MAX_LINE     256
 #define MAX_PATH     128
 #define MAX_FUNCNAME  64
@@ -165,33 +166,35 @@ static int run_module(struct faas_config *cfg, uint8_t *data, size_t len)
 		return -1;
 	}
 
-	int rc;
-	if (cfg->function[0] == '\0' ||
-	    strcmp(cfg->function, "_start") == 0) {
-		/* run-style: call _start, no return value */
-		rc = ukwasmtime_module_run(engine, module);
-		if (rc == 0)
-			printf("FAAS_RESULT:ok\n");
-		else
-			printf("FAAS_ERROR:module _start failed\n");
-	} else if (cfg->argc == 2) {
-		int32_t result;
-		rc = ukwasmtime_module_call_ii_i(engine, module,
-						 cfg->function,
-						 cfg->args[0],
-						 cfg->args[1],
-						 &result);
-		if (rc == 0)
-			printf("FAAS_RESULT:%d\n", result);
-		else
-			printf("FAAS_ERROR:call %s failed\n",
-			       cfg->function);
-	} else {
-		printf("FAAS_ERROR:unsupported module signature "
-		       "(argc=%d, need 0 or 2)\n", cfg->argc);
-		rc = -1;
+	void *instance = ukwasmtime_instantiate_module(engine, module);
+	if (!instance) {
+		printf("FAAS_ERROR:module instantiate failed\n");
+		ukwasmtime_module_destroy(module);
+		ukwasmtime_engine_destroy(engine);
+		return -1;
 	}
 
+	/* Empty function name means the run-style "_start" entry point. */
+	const char *func = cfg->function[0] ? cfg->function : "_start";
+
+	ukw_val_t args[MAX_ARGS];
+	for (int i = 0; i < cfg->argc; i++)
+		args[i] = UKW_VAL_I32(cfg->args[i]);
+
+	ukw_val_t results[MAX_RESULTS];
+	size_t nresults = 0;
+	int rc = ukwasmtime_call(instance, func, args, (size_t)cfg->argc,
+				 results, MAX_RESULTS, &nresults);
+	if (rc == 0) {
+		if (nresults >= 1 && results[0].kind == UKW_I32)
+			printf("FAAS_RESULT:%d\n", results[0].of.i32);
+		else
+			printf("FAAS_RESULT:ok\n");
+	} else {
+		printf("FAAS_ERROR:call %s failed (rc=%d)\n", func, rc);
+	}
+
+	ukwasmtime_instance_free(instance);
 	ukwasmtime_module_destroy(module);
 	ukwasmtime_engine_destroy(engine);
 	return rc;
@@ -212,36 +215,34 @@ static int run_component(struct faas_config *cfg, uint8_t *data, size_t len)
 		return -1;
 	}
 
-	int rc;
-	if (cfg->argc == 1) {
-		int32_t result;
-		rc = ukwasmtime_component_call_i_i(engine, component,
-						   cfg->function,
-						   cfg->args[0],
-						   &result);
-		if (rc == 0)
-			printf("FAAS_RESULT:%d\n", result);
-		else
-			printf("FAAS_ERROR:call %s failed\n",
-			       cfg->function);
-	} else if (cfg->argc == 2) {
-		int32_t result;
-		rc = ukwasmtime_component_call_ii_i(engine, component,
-						    cfg->function,
-						    cfg->args[0],
-						    cfg->args[1],
-						    &result);
-		if (rc == 0)
-			printf("FAAS_RESULT:%d\n", result);
-		else
-			printf("FAAS_ERROR:call %s failed\n",
-			       cfg->function);
-	} else {
-		printf("FAAS_ERROR:unsupported component signature "
-		       "(argc=%d, need 1 or 2)\n", cfg->argc);
-		rc = -1;
+	void *instance = ukwasmtime_instantiate_component(engine, component);
+	if (!instance) {
+		printf("FAAS_ERROR:component instantiate failed\n");
+		ukwasmtime_component_destroy(component);
+		ukwasmtime_engine_destroy(engine);
+		return -1;
 	}
 
+	ukw_val_t args[MAX_ARGS];
+	for (int i = 0; i < cfg->argc; i++)
+		args[i] = UKW_VAL_I32(cfg->args[i]);
+
+	ukw_val_t results[MAX_RESULTS];
+	size_t nresults = 0;
+	int rc = ukwasmtime_call(instance, cfg->function, args,
+				 (size_t)cfg->argc, results, MAX_RESULTS,
+				 &nresults);
+	if (rc == 0) {
+		if (nresults >= 1 && results[0].kind == UKW_I32)
+			printf("FAAS_RESULT:%d\n", results[0].of.i32);
+		else
+			printf("FAAS_RESULT:ok\n");
+	} else {
+		printf("FAAS_ERROR:call %s failed (rc=%d)\n",
+		       cfg->function, rc);
+	}
+
+	ukwasmtime_instance_free(instance);
 	ukwasmtime_component_destroy(component);
 	ukwasmtime_engine_destroy(engine);
 	return rc;
