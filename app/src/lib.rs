@@ -91,6 +91,25 @@ fn read_file(path: &[u8]) -> Option<Vec<u8>> {
     Some(buf)
 }
 
+/// Run a precompiled module's `_start` export from `.cwasm` bytes.
+///
+/// Instantiates with the default `env.print_i32` host import (so hello-style
+/// modules print) and invokes `_start`, which takes and returns nothing.
+fn run_start(bytes: &[u8]) -> Result<(), ()> {
+    let engine = ukwasmtime::create_engine().map_err(|_| ())?;
+    let module = ukwasmtime::load_module(&engine, bytes).map_err(|_| ())?;
+    let mut instance = ukwasmtime::Instance::from_module(&engine, &module).map_err(|_| ())?;
+    instance.call_dyn("_start", &[]).map(|_| ()).map_err(|_| ())
+}
+
+/// Call a module's exported `(i32, i32) -> i32` function from `.cwasm` bytes.
+fn call_ii_i(bytes: &[u8], func: &str, a: i32, b: i32) -> Result<i32, ()> {
+    let engine = ukwasmtime::create_engine().map_err(|_| ())?;
+    let module = ukwasmtime::load_module(&engine, bytes).map_err(|_| ())?;
+    let mut instance = ukwasmtime::Instance::from_module(&engine, &module).map_err(|_| ())?;
+    instance.call::<(i32, i32), i32>(func, (a, b)).map_err(|_| ())
+}
+
 fn demo_hello_module() {
     print(b"=== Running hello module ===\n\0");
 
@@ -102,7 +121,7 @@ fn demo_hello_module() {
         None => return,
     };
 
-    match ukwasmtime::run_module(&bytes) {
+    match run_start(&bytes) {
         Ok(()) => print(b"hello module finished OK\n\0"),
         Err(_) => print(b"ERROR: hello module failed\n\0"),
     }
@@ -117,7 +136,7 @@ fn demo_add_module() {
     };
 
     let (a, b) = (3, 4);
-    match ukwasmtime::call_module_ii_i(&bytes, "add", a, b) {
+    match call_ii_i(&bytes, "add", a, b) {
         Ok(result) => {
             printf(
                 b"add(%d, %d) = %d\n\0".as_ptr() as *const c_char,
@@ -225,7 +244,7 @@ fn handle_add(body: &[u8], add_wasm: Option<&[u8]>) -> Vec<u8> {
         Some(w) => w,
         None => return json_error("503 Service Unavailable", "add module unavailable"),
     };
-    match ukwasmtime::call_module_ii_i(wasm, "add", req.a, req.b) {
+    match call_ii_i(wasm, "add", req.a, req.b) {
         Ok(result) => json_ok(&AddResponse { result }),
         Err(_) => json_error("500 Internal Server Error", "add call failed"),
     }
